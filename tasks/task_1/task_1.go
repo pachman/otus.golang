@@ -12,8 +12,8 @@ type Time struct {
 	Seconds int
 }
 
-func (ext Time) String() string {
-	return fmt.Sprintf("%02d:%02d:%02d", ext.Hour, ext.Minute, ext.Seconds)
+func (t Time) String() string {
+	return fmt.Sprintf("%02d:%02d:%02d", t.Hour, t.Minute, t.Seconds)
 }
 
 func main() {
