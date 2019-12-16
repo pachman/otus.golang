@@ -4,39 +4,22 @@ import (
 	"fmt"
 	"github.com/beevik/ntp"
 	"os"
+	"time"
 )
 
-type Time struct {
-	Hour    int
-	Minute  int
-	Seconds int
-}
-
-func (t Time) String() string {
-	return fmt.Sprintf("%02d:%02d:%02d", t.Hour, t.Minute, t.Seconds)
+func formatTime(localNow time.Time, globalNow time.Time) string {
+	timeFormat := "15:04:05"
+	return fmt.Sprintf("%s / %s", localNow.Format(timeFormat), globalNow.Format(timeFormat))
 }
 
 func main() {
-	now, err := timeNow()
+	globalNow, err := ntp.Time("0.beevik-ntp.pool.ntp.org")
+	localNow := time.Now()
 
 	if err == nil {
-		fmt.Println("Time now:", now)
+		fmt.Println("Time now:", formatTime(localNow, globalNow))
 	} else {
 		fmt.Fprintf(os.Stderr, "Error: %s", err)
 		os.Exit(1)
-	}
-}
-
-func timeNow() (Time, error) {
-	time, err := ntp.Time("0.beevik-ntp.pool.ntp.org")
-
-	if err == nil {
-		return Time{
-			Hour:    time.Hour(),
-			Minute:  time.Minute(),
-			Seconds: time.Second(),
-		}, nil
-	} else {
-		return Time{}, err
 	}
 }
