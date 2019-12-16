@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	//"github.com/otus.golang/task_2"
 	"strings"
 )
 
@@ -55,6 +56,7 @@ func main() {
 		}
 	}
 
+	//fmt.Println(task_2.Unpack("qwe"))
 	fmt.Println(wordsGroup)
 
 	results := GetTopWords(wordsGroup)
