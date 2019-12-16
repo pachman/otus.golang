@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+const topSize = 10
+
 func main() {
 	text := `Как видите, он  спускается  по  лестнице  вслед  за  своим
 	другом   Кристофером   Робином,   головой   вниз,  пересчитывая
@@ -41,7 +43,7 @@ func main() {
 		В этот вечер...`
 
 	words := strings.Split(text, " ")
-	fmt.Println(words[1])
+
 	wordsGroup := make(map[string]int)
 
 	for _, word := range words {
@@ -52,5 +54,35 @@ func main() {
 			wordsGroup[word] = 1
 		}
 	}
+
 	fmt.Println(wordsGroup)
+
+	results := GetTopWords(wordsGroup)
+
+	fmt.Println(results)
+
+}
+
+func GetTopWords(wordsGroup map[string]int) [topSize]string {
+	var results [topSize]string
+	var counts [topSize]int
+
+	for key, value := range wordsGroup {
+		for i := 0; i < topSize; i++ {
+			if counts[i] <= value {
+				for j := topSize - 1; j > i; j-- {
+					counts[j] = counts[j-1]
+					results[j] = results[j-1]
+				}
+
+				counts[i] = value
+				results[i] = key
+				break
+			}
+		}
+	}
+
+	fmt.Println(counts)
+
+	return results
 }
