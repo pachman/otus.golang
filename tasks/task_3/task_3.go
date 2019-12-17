@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-const topSize = 10
+const topSizeNum = 10
 
 func main() {
 	text := `Как видите, он  спускается  по  лестнице  вслед  за  своим
@@ -65,14 +65,14 @@ func main() {
 
 }
 
-func GetTopWords(wordsGroup map[string]int) [topSize]string {
-	var results [topSize]string
-	var counts [topSize]int
+func GetTopWords(wordsGroup map[string]int) [topSizeNum]string {
+	var results [topSizeNum]string
+	var counts [topSizeNum]int
 
 	for key, value := range wordsGroup {
-		for i := 0; i < topSize; i++ {
+		for i := 0; i < topSizeNum; i++ {
 			if counts[i] <= value {
-				for j := topSize - 1; j > i; j-- {
+				for j := topSizeNum - 1; j > i; j-- {
 					counts[j] = counts[j-1]
 					results[j] = results[j-1]
 				}
