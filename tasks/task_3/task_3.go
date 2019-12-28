@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -42,26 +43,30 @@ func main() {
 	посидеть у огня и послушать какую-нибудь интересную сказку.
 		В этот вечер...`
 
-	words := strings.Split(text, " ")
+	wordsGroup := ParseText(text)
 
-	wordsGroup := make(map[string]int)
-
-	for _, word := range words {
-		_, wordExists := wordsGroup[word]
-		if wordExists {
-			wordsGroup[word]++
-		} else {
-			wordsGroup[word] = 1
-		}
-	}
-
-	//fmt.Println(task_2.Unpack("qwe"))
 	fmt.Println(wordsGroup)
 
 	results := GetTopWords(wordsGroup)
 
 	fmt.Println(results)
 
+}
+func ParseText(text string) map[string]int {
+	words := strings.Split(text, " ")
+	wordsGroup := make(map[string]int)
+
+	for _, word := range words {
+		if word == "" {
+			continue
+		}
+		re := regexp.MustCompile(`[a-zA-Zа-яА-Я_\-]+`)
+		clearWord := re.FindString(word)
+
+		wordsGroup[strings.ToLower(clearWord)]++
+	}
+	//fmt.Printf("%d\n", wordsGroup["кристофер"])
+	return wordsGroup
 }
 
 func GetTopWords(wordsGroup map[string]int) [topSizeNum]string {
