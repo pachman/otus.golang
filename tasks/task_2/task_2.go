@@ -1,79 +1,72 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"log"
+	"strings"
+	"unicode"
 )
 
 func main() {
-	input := `a4bc2d5e`
+	input := `\32a4bc2d5e\\5`
+	//input := `\a4`
 
 	unpack, err := Unpack(input)
 
-	if err == nil {
-		fmt.Println(unpack)
-	} else {
+	if err != nil {
 		log.Fatal(err)
 	}
 
+	fmt.Println(unpack)
 }
 
-func Unpack(s string) (result string, err error) {
-	var buffer bytes.Buffer
+func Unpack(packedString string) (unpackedString string, err error) {
 
-	var current byte
-
-	if len(s) == 0 || isNumber(s[0]) {
+	if len(packedString) == 0 || unicode.IsDigit(rune(packedString[0])) {
 		err = errors.New("Invalid input string")
 		return
 	}
 
-	escape := false
+	var buffer strings.Builder
+	var unpackedChar rune
+	isCharEscaped := false
+	for _, char := range packedString {
 
-	for i := 0; i < len(s); i++ {
-		b := s[i]
-
-		if escape && (isEscape(b) || isNumber(b)) {
-			current = s[i]
-			buffer.WriteByte(current)
-			escape = false
-			continue
-		}
-
-		if escape {
-			buffer.WriteByte(b)
-			escape = false
-			continue
-		}
-
-		if isEscape(b) {
-			escape = true
-			continue
-		}
-
-		if isNumber(b) {
-			count := int(b - 49)
-			for j := 0; j < count; j++ {
-				buffer.WriteByte(current)
+		if isCharEscaped {
+			if isEscape(char) || unicode.IsDigit(char) {
+				unpackedChar = char
+				buffer.WriteRune(char)
+				isCharEscaped = false
+				continue
+			} else {
+				err = errors.New("Invalid input string")
+				break
 			}
+		}
+
+		if isEscape(char) {
+			isCharEscaped = true
+			continue
+		}
+
+		if unicode.IsDigit(char) {
+			count := int(char - 49)
+			buffer.WriteString(strings.Repeat(string(unpackedChar), count))
 		} else {
-			current = s[i]
-			buffer.WriteByte(current)
+			unpackedChar = char
+			buffer.WriteRune(unpackedChar)
 		}
 	}
+	if err == nil {
+		unpackedString = buffer.String()
+	} else {
+		unpackedString = ""
+	}
 
-	result = buffer.String()
-	err = nil
-
-	return
+	return unpackedString, err
 }
 
-func isEscape(b uint8) bool {
-	return b == 92
-}
-
-func isNumber(b uint8) bool {
-	return b > 48 && b < 58
+func isEscape(b rune) bool {
+	return b == '\\'
 }
