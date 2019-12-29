@@ -43,29 +43,32 @@ func main() {
 	посидеть у огня и послушать какую-нибудь интересную сказку.
 		В этот вечер...`
 
-	wordsGroup := ParseText(text)
-
-	fmt.Println(wordsGroup)
-
-	results := GetTopWords(wordsGroup)
+	results := Top10(text)
 
 	fmt.Println(results)
 
 }
+
+func Top10(text string) (results [topSizeNum]string) {
+	wordsGroup := ParseText(text)
+
+	results = GetTopWords(wordsGroup)
+	return
+}
+
 func ParseText(text string) map[string]int {
 	words := strings.Split(text, " ")
 	wordsGroup := make(map[string]int)
 
+	re := regexp.MustCompile(`[a-zA-Zа-яА-Я_\-]+`)
 	for _, word := range words {
 		if word == "" {
 			continue
 		}
-		re := regexp.MustCompile(`[a-zA-Zа-яА-Я_\-]+`)
 		clearWord := re.FindString(word)
 
 		wordsGroup[strings.ToLower(clearWord)]++
 	}
-	//fmt.Printf("%d\n", wordsGroup["кристофер"])
 	return wordsGroup
 }
 
@@ -87,8 +90,5 @@ func GetTopWords(wordsGroup map[string]int) [topSizeNum]string {
 			}
 		}
 	}
-
-	fmt.Println(counts)
-
 	return results
 }
