@@ -17,7 +17,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	fmt.Println(unpack)
 }
 
@@ -63,7 +62,6 @@ func Unpack(packedString string) (unpackedString string, err error) {
 	} else {
 		unpackedString = ""
 	}
-
 	return unpackedString, err
 }
 
