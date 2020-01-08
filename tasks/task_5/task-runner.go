@@ -1,44 +1,78 @@
 package main
 
-func Run(tasks []func() error, tasksCount int, maxErrorCount int) {
+import "fmt"
+
+type TaskResult struct {
+	Id       int
+	Error    error
+	TryCount int
+}
+
+func (result TaskResult) HasError() bool {
+	return result.Error != nil
+}
+
+func (result TaskResult) String() string {
+	withErrorText := "without errors"
+	if result.HasError() {
+		withErrorText = "with errors"
+	}
+	return fmt.Sprintf("Task_%d\tdone %v,\tafter %d attempts", result.Id, withErrorText, result.TryCount)
+}
+
+func Run(tasks []func() error, tasksCount int, maxErrorCount int) []TaskResult {
 	length := len(tasks)
 
 	if tasksCount > length {
 		tasksCount = length
 	}
 
+	if maxErrorCount < 0 {
+		maxErrorCount = 1
+	}
+
 	i := 0
 
-	ch := make(chan bool, length)
+	ch := make(chan TaskResult, length)
 
 	for ; i < tasksCount; i++ {
 		index := i
-		ch = start(tasks, index, ch)
+		ch = start(ch, tasks, index, maxErrorCount)
 	}
 
 	j := 0
-	for isError := range ch {
-		if !isError && length > i {
-			ch = start(tasks, i, ch)
+	results := make([]TaskResult, length)
+
+	for result := range ch {
+		if length > i {
+			ch = start(ch, tasks, i, maxErrorCount)
 			i++
 		}
 
-		if isError {
-			maxErrorCount--
-		}
-
+		results[j] = result
 		j++
 
-		if length == j || maxErrorCount == 0 {
+		if length == j {
 			close(ch)
 		}
 	}
+
+	return results
 }
 
-func start(tasks []func() error, index int, ch chan bool) chan bool {
+func start(ch chan TaskResult, tasks []func() error, index int, maxErrorCount int) chan TaskResult {
 	go func() {
-		err := tasks[index]()
-		ch <- err != nil
+		tryLeft := maxErrorCount - 1
+		for {
+			err := tasks[index]()
+
+			if err == nil || tryLeft == 0 {
+				ch <- TaskResult{Id: index, Error: err, TryCount: maxErrorCount - tryLeft}
+				break
+			}
+
+			tryLeft--
+		}
 	}()
 
 	return ch
