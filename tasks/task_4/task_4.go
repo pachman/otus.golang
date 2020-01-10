@@ -84,16 +84,19 @@ func (l *List) Remove(value interface{}) {
 	current := l.first
 	for i := 0; i < l.count; i++ {
 		if value == current.Value() {
-			if l.First() == l.Last() {
+			switch {
+			case l.First() == l.Last():
 				l.last = nil
 				l.first = nil
-			} else if l.first == current {
+
+			case l.first == current:
 				l.first = l.first.Next()
-			} else if l.last == current {
+
+			case l.last == current:
 				prev := l.last.prev
 				prev.next = nil
 				l.last = prev
-			} else {
+			default:
 				prev := current.prev
 				next := current.next
 
