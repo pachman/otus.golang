@@ -33,11 +33,19 @@ func (l List) Len() int {
 }
 
 func (l List) First() interface{} {
-	return l.first.Value()
+	if l.first != nil {
+		return l.first.Value()
+	} else {
+		return nil
+	}
 }
 
 func (l List) Last() interface{} {
-	return l.last.Value()
+	if l.last != nil {
+		return l.last.Value()
+	} else {
+		return nil
+	}
 }
 
 func (l *List) PushFront(value interface{}) {
