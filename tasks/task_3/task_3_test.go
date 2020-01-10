@@ -47,7 +47,7 @@ func TestGetTopWords(t *testing.T) {
 		"енот": 1,
 		"рад":  2,
 	}
-	expected := [10]string{"рад", "енот"}
+	expected := []string{"рад", "енот"}
 
 	actual := GetTopWords(input)
 	eq := reflect.DeepEqual(actual, expected)
