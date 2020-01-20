@@ -3,10 +3,18 @@ package main
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 )
 
 const topSizeNum = 10
+
+var wordRe = regexp.MustCompile(`[a-zA-Zа-яА-Я_\-]+`)
+
+type Word struct {
+	word  string
+	count int
+}
 
 func main() {
 	text := `Как видите, он  спускается  по  лестнице  вслед  за  своим
@@ -49,46 +57,45 @@ func main() {
 
 }
 
-func Top10(text string) (results [topSizeNum]string) {
+func Top10(text string) (result []string) {
 	wordsGroup := ParseText(text)
 
-	results = GetTopWords(wordsGroup)
-	return
+	result = GetTopWords(wordsGroup)
+	return result
 }
 
 func ParseText(text string) map[string]int {
 	words := strings.Split(text, " ")
 	wordsGroup := make(map[string]int)
 
-	re := regexp.MustCompile(`[a-zA-Zа-яА-Я_\-]+`)
 	for _, word := range words {
 		if word == "" {
 			continue
 		}
-		clearWord := re.FindString(word)
+		clearWord := wordRe.FindString(word)
 
 		wordsGroup[strings.ToLower(clearWord)]++
 	}
 	return wordsGroup
 }
 
-func GetTopWords(wordsGroup map[string]int) [topSizeNum]string {
-	var results [topSizeNum]string
-	var counts [topSizeNum]int
-
+func GetTopWords(wordsGroup map[string]int) []string {
+	var words = make([]Word, 0, len(wordsGroup))
 	for key, value := range wordsGroup {
-		for i := 0; i < topSizeNum; i++ {
-			if counts[i] <= value {
-				for j := topSizeNum - 1; j > i; j-- {
-					counts[j] = counts[j-1]
-					results[j] = results[j-1]
-				}
-
-				counts[i] = value
-				results[i] = key
-				break
-			}
-		}
+		words = append(words, Word{word: key, count: value})
 	}
-	return results
+
+	sort.Slice(words, func(i, j int) bool {
+		return words[i].count > words[j].count
+	})
+
+	var result = make([]string, 0, topSizeNum)
+	var length int
+	if length = topSizeNum; len(words) < topSizeNum {
+		length = len(words)
+	}
+	for _, word := range words[0:length] {
+		result = append(result, word.word)
+	}
+	return result
 }
