@@ -32,41 +32,58 @@ func Run(tasks []func() error, goroutinesCount int, maxErrorCount int) []TaskRes
 	if maxErrorCount < 0 {
 		maxErrorCount = 1
 	}
-	ch := make(chan TaskResult, tasksCount)
+
+	closeChannel := make(chan bool, 1)
+	taskChannel := make(chan TaskResult, goroutinesCount)
 
 	taskIndex := 0
 	for ; taskIndex < goroutinesCount; taskIndex++ {
-		wg.Add(1)
-		start(ch, tasks, taskIndex, &wg)
+		start(taskChannel, tasks, taskIndex, closeChannel, wg)
 	}
 
 	results := make([]TaskResult, 0, tasksCount)
 	errorCount := 0
 
-	for result := range ch {
+	for result := range taskChannel {
 		results = append(results, result)
 
 		if result.Error != nil {
 			errorCount++
+
+			if errorCount >= maxErrorCount {
+				closeChannel <- true
+
+				break
+			}
 		}
-		if (tasksCount > taskIndex) && (errorCount < maxErrorCount) {
-			wg.Add(1)
-			start(ch, tasks, taskIndex, &wg)
+
+		if tasksCount > taskIndex {
+			start(taskChannel, tasks, taskIndex, closeChannel, wg)
 			taskIndex++
-		} else {
-			wg.Wait()
-			//close(ch)
 		}
+
+		if tasksCount == len(results) {
+			break
+		}
+
 	}
 
+	//close(closeChannel)
+
+	fmt.Println("finish")
+
+	close(taskChannel)
+	close(closeChannel)
 	return results
 }
 
-func start(ch chan TaskResult, tasks []func() error, taskIndex int, wg *sync.WaitGroup) chan TaskResult {
+func start(ch chan TaskResult, tasks []func() error, taskIndex int, closeChannel chan bool, wg sync.WaitGroup) {
+	wg.Add(1)
+	//closeChannel <- false
 	go func() {
 		defer wg.Done()
 		err := tasks[taskIndex]()
+
 		ch <- TaskResult{Id: taskIndex, Error: err}
 	}()
-	return ch
 }

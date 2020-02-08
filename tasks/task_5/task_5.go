@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	count := 25
+	count := 125
 	tasks := make([]func() error, count)
 
 	for i := 0; i < count; i++ {
@@ -17,6 +17,7 @@ func main() {
 			rand.Seed(time.Now().UnixNano())
 			rnd := rand.Int() % 10
 
+			fmt.Println(rnd)
 			if rnd > 4 {
 				return fmt.Errorf("Error %d ", rnd)
 			}
@@ -24,10 +25,10 @@ func main() {
 		}
 	}
 
-	results := Run(tasks, 1, -1)
+	results := Run(tasks, 15, 30)
 
 	fmt.Println("List of results:")
-	for i := 0; i < count; i++ {
+	for i := 0; i < len(results); i++ {
 		fmt.Println(results[i])
 	}
 }
