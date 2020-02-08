@@ -20,12 +20,11 @@ func main() {
 			if rnd > 4 {
 				return fmt.Errorf("Error %d ", rnd)
 			}
-
 			return nil
 		}
 	}
 
-	results := Run(tasks, 3, -1)
+	results := Run(tasks, 1, -1)
 
 	fmt.Println("List of results:")
 	for i := 0; i < count; i++ {

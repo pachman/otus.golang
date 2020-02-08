@@ -1,11 +1,13 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"sync"
+)
 
 type TaskResult struct {
-	Id       int
-	Error    error
-	TryCount int
+	Id    int
+	Error error
 }
 
 func (result TaskResult) HasError() bool {
@@ -15,65 +17,56 @@ func (result TaskResult) HasError() bool {
 func (result TaskResult) String() string {
 	withErrorText := "without errors"
 	if result.HasError() {
-		withErrorText = "with errors"
+		withErrorText = "with error"
 	}
-	return fmt.Sprintf("Task_%d\tdone %v,\tafter %d attempts", result.Id, withErrorText, result.TryCount)
+	return fmt.Sprintf("Task_%d\tdone %v", result.Id, withErrorText)
 }
 
-func Run(tasks []func() error, tasksCount int, maxErrorCount int) []TaskResult {
-	length := len(tasks)
+func Run(tasks []func() error, goroutinesCount int, maxErrorCount int) []TaskResult {
+	tasksCount := len(tasks)
+	var wg sync.WaitGroup
 
-	if tasksCount > length {
-		tasksCount = length
+	if goroutinesCount > tasksCount {
+		goroutinesCount = tasksCount
 	}
-
 	if maxErrorCount < 0 {
 		maxErrorCount = 1
 	}
+	ch := make(chan TaskResult, tasksCount)
 
-	i := 0
-
-	ch := make(chan TaskResult, length)
-
-	for ; i < tasksCount; i++ {
-		index := i
-		ch = start(ch, tasks, index, maxErrorCount)
+	taskIndex := 0
+	for ; taskIndex < goroutinesCount; taskIndex++ {
+		wg.Add(1)
+		start(ch, tasks, taskIndex, &wg)
 	}
 
-	j := 0
-	results := make([]TaskResult, length)
+	results := make([]TaskResult, 0, tasksCount)
+	errorCount := 0
 
 	for result := range ch {
-		if length > i {
-			ch = start(ch, tasks, i, maxErrorCount)
-			i++
+		results = append(results, result)
+
+		if result.Error != nil {
+			errorCount++
 		}
-
-		results[j] = result
-		j++
-
-		if length == j {
-			close(ch)
+		if (tasksCount > taskIndex) && (errorCount < maxErrorCount) {
+			wg.Add(1)
+			start(ch, tasks, taskIndex, &wg)
+			taskIndex++
+		} else {
+			wg.Wait()
+			//close(ch)
 		}
 	}
 
 	return results
 }
 
-func start(ch chan TaskResult, tasks []func() error, index int, maxErrorCount int) chan TaskResult {
+func start(ch chan TaskResult, tasks []func() error, taskIndex int, wg *sync.WaitGroup) chan TaskResult {
 	go func() {
-		tryLeft := maxErrorCount - 1
-		for {
-			err := tasks[index]()
-
-			if err == nil || tryLeft == 0 {
-				ch <- TaskResult{Id: index, Error: err, TryCount: maxErrorCount - tryLeft}
-				break
-			}
-
-			tryLeft--
-		}
+		defer wg.Done()
+		err := tasks[taskIndex]()
+		ch <- TaskResult{Id: taskIndex, Error: err}
 	}()
-
 	return ch
 }
